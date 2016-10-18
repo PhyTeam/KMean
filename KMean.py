@@ -2,6 +2,7 @@ from numpy import *
 import random as rnd
 import matplotlib.pyplot as plt
 from collections import Counter
+from KDTree import KDTree2centroids
 MAX_ITERATIONS = 4
 
 
@@ -59,7 +60,8 @@ def kmeans(dataset, k):
     numFeatures = 1
     if ndim(dataset) > 1:
         numFeatures = shape(dataset)[1]
-    centroids = getRandomCentroids(dataset, k)
+    #centroids = getRandomCentroids(dataset, k)
+    centroids = KDTree2centroids(dataset, k)
     # print centroids
     # figure = plt.figure()
     # ax1 = figure.add_subplot(111)
@@ -98,6 +100,22 @@ def kmeans(dataset, k):
         # Calculate new centroids
         centroids = getCentroids(dataset, labels, k)
     # plt.show()
+    figure2 = plt.figure()
+    ax2 = figure2.add_subplot(111)
+    color = ['r', 'b', 'g', 'c']
+    for i in range(k):  # For each
+        # print labels
+        cluster = []
+        for j in range(len(dataset)):
+            if labels[j] == i:
+                cluster.append(dataset[j])
+        if len(cluster) > 0:
+            cluster = array(cluster)
+            print cluster
+            plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
+    plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
+    plt.show()
+
     return labels
 
 def calcInformationGain(dataset, outputs, targets):
@@ -135,13 +153,15 @@ def main():
     print "KD-Mean algorithm"
     random.seed(5)
     # dataset = random.rand(1000, 2)
-    dataset = loadtxt('C:\\Users\\bbphuc\\Desktop\\UCI_Handwriten\\pendigits.tra', delimiter=',')
-    targets = dataset[:,-1]
-    dataset = dataset[:,:-1]
+    dataset = loadtxt('pendigits.tra', delimiter=',')
+    #dataset = loadtxt('test.txt', delimiter=',')
+    #dataset = [(2, 3), (3, 2), (5, 4), (9, 6), (4, 7), (8, 1), (7, 2), (8,8), (10,3),(1,1),(5,9), (9,3)]
+    #targets = dataset[:,-1]
+    #dataset = dataset[:,:-1]
     # plt.plot(dataset[:,0], dataset[:,1], 'o')
     # plt.show()
-    outputs = kmeans(dataset, 10)
-    calcInformationGain(dataset, outputs, targets)
+    outputs = kmeans(dataset, 8)
+    #calcInformationGain(dataset, outputs, targets)
 
 if __name__ == '__main__':
     main()
