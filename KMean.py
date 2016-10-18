@@ -3,18 +3,25 @@ import random as rnd
 import matplotlib.pyplot as plt
 from collections import Counter
 from KDTree import KDTree2centroids
-MAX_ITERATIONS = 4
+MAX_ITERATIONS = 20
 
 
-def getRandomCentroids(dataset, k):
+def getRandomCentroids(dataset, k, type='Forgy'):
     numFeatures = 1
     numData = shape(dataset)[0]
     if ndim(dataset) > 1:
         numFeatures = shape(dataset)[1]
 
     # Assign k sample as centroids
-    return array(rnd.sample(dataset, k))
-
+    if type == 'Forgy':
+        return array(rnd.sample(dataset, k))
+    else:
+        labels = random.randint(0, k, len(dataset))
+        #print min(labels), max(labels)
+        #print labels
+        #print 'Centroids'
+        #print getCentroids(dataset, labels, k)
+        return getCentroids(dataset, labels, k)
 
 def getCentroids(dataset, labels, k):
     newCentroids = []
@@ -55,13 +62,17 @@ def shouldStop(oldCentroids, centroids, iterations):
     return array_equal(oldCentroids, centroids)
 
 
-def kmeans(dataset, k):
+def kmeans(dataset, k, initmethod):
     # Initialize centroids randomly ( Forgy approch)
     numFeatures = 1
     if ndim(dataset) > 1:
         numFeatures = shape(dataset)[1]
     #centroids = getRandomCentroids(dataset, k)
-    centroids = KDTree2centroids(dataset, k)
+    centroids = None
+    if initmethod == 'kdtree':
+        centroids = KDTree2centroids(dataset, k)
+    else:
+        centroids = getRandomCentroids(dataset, k, initmethod)
     # print centroids
     # figure = plt.figure()
     # ax1 = figure.add_subplot(111)
@@ -102,7 +113,7 @@ def kmeans(dataset, k):
     # plt.show()
     figure2 = plt.figure()
     ax2 = figure2.add_subplot(111)
-    color = ['r', 'b', 'g', 'c']
+    color = ['r', 'b', 'g', 'c'] * 3
     for i in range(k):  # For each
         # print labels
         cluster = []
@@ -114,9 +125,34 @@ def kmeans(dataset, k):
             print cluster
             plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
     plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
-    plt.show()
 
     return labels
+
+def generateGaussianData(n, nCentroids):
+
+    random.seed()
+    means = random.uniform(0, 10,(nCentroids,2))
+    s = 0.05
+    r = random.uniform(0.2 * s * sqrt(n), s * sqrt(n))
+    cov = [[r,0],[r,1]]
+    cluster = [(random.multivariate_normal(means[i], cov, n), i) for i in range(len(means))]
+    point, tar = [point for point, tar in cluster], [tar for point, tar in cluster]
+    fg = plt.figure()
+    plt.axis('equal')
+    ax = fg.add_subplot(111)
+    color = ['r', 'b', 'g', 'c'] * 3
+    for i, c in enumerate(point):
+        plt.plot(c[:, 0], c[:, 1], color[i] + 'o')
+
+    #clear_data = array([c[j] for c in point for j in range(len(c))])
+    maxi, mini = max(array(point).flatten()) , min(array(point).flatten())
+    noise = random.uniform(mini, maxi, (n // 10, 2))
+    tar_noise = random.randint(0, nCentroids, n // 10)
+    point = array([c[j] for c in point for j in range(n)])
+    print shape(noise)
+    print shape(point)
+    tar = [i for i in range(nCentroids) for j in range(n)]
+    return concatenate((noise,point), axis = 0), concatenate((tar_noise, array(tar)), axis = 0)
 
 def calcInformationGain(dataset, outputs, targets):
     classes = set(targets)
@@ -153,15 +189,42 @@ def main():
     print "KD-Mean algorithm"
     random.seed(5)
     # dataset = random.rand(1000, 2)
-    dataset = loadtxt('pendigits.tra', delimiter=',')
+    #dataset = loadtxt('pendigits.tra', delimiter=',')
+    kcluster = 5
+    dataset, labels = generateGaussianData(300, kcluster)
+    print "Label", labels
+    figure2 = plt.figure("Target")
+    ax2 = figure2.add_subplot(111)
+    color = ['r', 'b', 'g', 'c'] * 3
+    for i in range(kcluster):  # For each
+        # print labels
+        cluster = []
+        for j in range(len(dataset)):
+            if labels[j] == i:
+                cluster.append(dataset[j])
+        if len(cluster) > 0:
+            cluster = array(cluster)
+            print cluster
+            plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
+    #plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
+
     #dataset = loadtxt('test.txt', delimiter=',')
     #dataset = [(2, 3), (3, 2), (5, 4), (9, 6), (4, 7), (8, 1), (7, 2), (8,8), (10,3),(1,1),(5,9), (9,3)]
     #targets = dataset[:,-1]
     #dataset = dataset[:,:-1]
     # plt.plot(dataset[:,0], dataset[:,1], 'o')
     # plt.show()
-    outputs = kmeans(dataset, 8)
-    #calcInformationGain(dataset, outputs, targets)
+    outputs = kmeans(dataset, kcluster, 'Forgy')
+    output1 = kmeans(dataset, kcluster, 'randompar')
+    output2 = kmeans(dataset, kcluster, 'kdtree')
+    print 'Forgy'
+    calcInformationGain(dataset, outputs, labels)
+    print 'randompar'
+    calcInformationGain(dataset, output1, labels)
+    print 'kdtree'
+    calcInformationGain(dataset, output2, labels)
+
+    plt.show()
 
 if __name__ == '__main__':
     main()
