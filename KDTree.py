@@ -143,13 +143,13 @@ def KDTree2centroids(point_list, kcluster):
     dim = len(point_list[0]) # Can cause error
     bucket_threshold =  n / (10 * kcluster) # FIXME: approriate 10 bucket for a cluster
     tree = kdtree(point_list)
-    print 'Tree'
+    # print 'Tree'
     #print tree
-    print '========'
+    # print '========'
     LeafBucket = getLeafBucket(tree)
     #print LeafBucket
     centroids = chooseCentroids(LeafBucket, kcluster)
-    print 'Centroids'
+    print 'Init Centroids'
     print np.array(centroids)
     print '========'
     return np.array(centroids)

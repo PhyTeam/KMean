@@ -7,6 +7,12 @@ MAX_ITERATIONS = 20
 
 
 def getRandomCentroids(dataset, k, type='Forgy'):
+    """ Return a list of Centroids
+        Attribute:
+            dataset: array of points
+            k : number of cluster = number of centroids
+            type: 'Forgy' | 'Random Partition'
+    """
     numFeatures = 1
     numData = shape(dataset)[0]
     if ndim(dataset) > 1:
@@ -15,21 +21,26 @@ def getRandomCentroids(dataset, k, type='Forgy'):
     # Assign k sample as centroids
     if type == 'Forgy':
         return array(rnd.sample(dataset, k))
-    else:
+    else: # Random Partition
         labels = random.randint(0, k, len(dataset))
-        #print min(labels), max(labels)
-        #print labels
-        #print 'Centroids'
-        #print getCentroids(dataset, labels, k)
-        return getCentroids(dataset, labels, k)
+        # in case a cluster has no points
+        check = in1d(range(k), labels)
+        if False in check:
+            return getRandomCentroids(dataset, k, type)
+        else:
+            return getCentroids(dataset, labels, k, [])
 
-def getCentroids(dataset, labels, k):
+def getCentroids(dataset, labels, k, oldCentroids):
     newCentroids = []
     for xcluster in range(k):
         cluster = [i for i, j in zip(dataset, labels) if j == xcluster]
-        newCentroids.append(mean(cluster, axis=0))
-    # print "{0:-^30}".format("New Centrolds")
-    # print newCentroids
+        # in case a cluster is empty
+        if len(cluster) > 0:
+            newCentroids.append(mean(cluster, axis=0))
+        else: # cluster is empty
+            newCentroids.append(oldCentroids[xcluster]) # assign new = oldcentroids for empty cluster
+    print "{0:-^30}".format("New Centrolds")
+    print newCentroids
     return array(newCentroids)
 
 
@@ -109,9 +120,9 @@ def kmeans(dataset, k, initmethod):
                 plt.plot(cluster[:, 0], cluster[:, 1], color[i] + 'o')
         plt.plot(centroids[:, 0], centroids[:, 1], 'k^')'''
         # Calculate new centroids
-        centroids = getCentroids(dataset, labels, k)
+        centroids = getCentroids(dataset, labels, k, oldCentroids)
     # plt.show()
-    figure2 = plt.figure()
+    figure2 = plt.figure(str(initmethod))
     ax2 = figure2.add_subplot(111)
     color = ['r', 'b', 'g', 'c'] * 3
     for i in range(k):  # For each
@@ -129,15 +140,25 @@ def kmeans(dataset, k, initmethod):
     return labels
 
 def generateGaussianData(n, nCentroids):
-
+    """ Generate dataset randomly with Gaussian distribution
+        Generate noise and add into dataset
+        Return dataset
+        Attribute:
+            n : number of points in each cluster
+            nCentroids: number of cluster (k in K-Mean)
+    """
     random.seed()
+    # Random n centroids
     means = random.uniform(0, 10,(nCentroids,2))
+    # generate gaussian data arround these centroids
     s = 0.05
     r = random.uniform(0.2 * s * sqrt(n), s * sqrt(n))
     cov = [[r,0],[r,1]]
     cluster = [(random.multivariate_normal(means[i], cov, n), i) for i in range(len(means))]
+    # Get dataset and targets from dataset
     point, tar = [point for point, tar in cluster], [tar for point, tar in cluster]
-    fg = plt.figure()
+    # Draw 
+    fg = plt.figure('Clear Data')
     plt.axis('equal')
     ax = fg.add_subplot(111)
     color = ['r', 'b', 'g', 'c'] * 3
@@ -146,12 +167,14 @@ def generateGaussianData(n, nCentroids):
 
     #clear_data = array([c[j] for c in point for j in range(len(c))])
     maxi, mini = max(array(point).flatten()) , min(array(point).flatten())
+    # Add noise to dataset
     noise = random.uniform(mini, maxi, (n // 10, 2))
-    tar_noise = random.randint(0, nCentroids, n // 10)
+    tar_noise = getLabels(noise, means)   #random.randint(0, nCentroids, n // 10)
     point = array([c[j] for c in point for j in range(n)])
-    print shape(noise)
-    print shape(point)
+    #print shape(noise)
+    #print shape(point)
     tar = [i for i in range(nCentroids) for j in range(n)]
+
     return concatenate((noise,point), axis = 0), concatenate((tar_noise, array(tar)), axis = 0)
 
 def calcInformationGain(dataset, outputs, targets):
@@ -192,7 +215,7 @@ def main():
     #dataset = loadtxt('pendigits.tra', delimiter=',')
     kcluster = 5
     dataset, labels = generateGaussianData(300, kcluster)
-    print "Label", labels
+    # print "Label", labels
     figure2 = plt.figure("Target")
     ax2 = figure2.add_subplot(111)
     color = ['r', 'b', 'g', 'c'] * 3
@@ -204,7 +227,7 @@ def main():
                 cluster.append(dataset[j])
         if len(cluster) > 0:
             cluster = array(cluster)
-            print cluster
+            # print cluster
             plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
     #plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
 
@@ -215,7 +238,7 @@ def main():
     # plt.plot(dataset[:,0], dataset[:,1], 'o')
     # plt.show()
     outputs = kmeans(dataset, kcluster, 'Forgy')
-    output1 = kmeans(dataset, kcluster, 'randompar')
+    output1 = kmeans(dataset, kcluster, 'Random Partition')
     output2 = kmeans(dataset, kcluster, 'kdtree')
     print 'Forgy'
     calcInformationGain(dataset, outputs, labels)
