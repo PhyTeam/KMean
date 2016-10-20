@@ -149,9 +149,9 @@ def KDTree2centroids(point_list, kcluster):
     LeafBucket = getLeafBucket(tree)
     #print LeafBucket
     centroids = chooseCentroids(LeafBucket, kcluster)
-    print 'Init Centroids'
+    print 'Init Centroids with kdtree'
     print np.array(centroids)
-    print '========'
+    print '=========='
     return np.array(centroids)
 
 if __name__ == '__main__':

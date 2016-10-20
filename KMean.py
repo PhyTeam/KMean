@@ -17,18 +17,23 @@ def getRandomCentroids(dataset, k, type='Forgy'):
     numData = shape(dataset)[0]
     if ndim(dataset) > 1:
         numFeatures = shape(dataset)[1]
-
+    # Init result array
+    res = []
     # Assign k sample as centroids
     if type == 'Forgy':
-        return array(rnd.sample(dataset, k))
+        res = array(rnd.sample(dataset, k))
     else: # Random Partition
         labels = random.randint(0, k, len(dataset))
         # in case a cluster has no points
         check = in1d(range(k), labels)
         if False in check:
-            return getRandomCentroids(dataset, k, type)
+            res = getRandomCentroids(dataset, k, type)
         else:
-            return getCentroids(dataset, labels, k, [])
+            res = getCentroids(dataset, labels, k, [])
+    print "Init centroids with ", type
+    print res
+    print "==========="
+    return res
 
 def getCentroids(dataset, labels, k, oldCentroids):
     newCentroids = []
@@ -39,8 +44,8 @@ def getCentroids(dataset, labels, k, oldCentroids):
             newCentroids.append(mean(cluster, axis=0))
         else: # cluster is empty
             newCentroids.append(oldCentroids[xcluster]) # assign new = oldcentroids for empty cluster
-    print "{0:-^30}".format("New Centrolds")
-    print newCentroids
+    # print "{0:-^30}".format("New Centrolds")
+    # print newCentroids
     return array(newCentroids)
 
 
@@ -133,7 +138,7 @@ def kmeans(dataset, k, initmethod):
                 cluster.append(dataset[j])
         if len(cluster) > 0:
             cluster = array(cluster)
-            print cluster
+            # print cluster
             plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
     plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
 
