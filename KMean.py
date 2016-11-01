@@ -108,23 +108,6 @@ def kmeans(dataset, k, initmethod):
 
         # Assign labels to each data point based on centroids
         labels = getLabels(dataset, centroids)
-
-        # Assign new centroids base on datapoint label
-        # figure2 = plt.figure()
-        # ax2 = figure2.add_subplot(111)
-        '''
-        color = ['r', 'b', 'g', 'c', 'm', 'i', 'k', 'w']
-        for i in range(k):  # For each
-            # print labels
-            cluster = []
-            for j in range(len(dataset)):
-                if labels[j] == i:
-                    cluster.append(dataset[j])
-            if len(cluster) > 0:
-                cluster = array(cluster)
-                plt.plot(cluster[:, 0], cluster[:, 1], color[i] + 'o')
-        plt.plot(centroids[:, 0], centroids[:, 1], 'k^')'''
-        # Calculate new centroids
         centroids = getCentroids(dataset, labels, k, oldCentroids)
     # plt.show()
     figure2 = plt.figure(str(initmethod))
@@ -141,7 +124,8 @@ def kmeans(dataset, k, initmethod):
             # print cluster
             plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
     plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
-
+    print "Iteraction of " + initmethod + ": "+str(iterations)
+    print "==========="
     return labels
 
 def generateGaussianData(n, nCentroids):
@@ -154,11 +138,22 @@ def generateGaussianData(n, nCentroids):
     """
     random.seed()
     # Random n centroids
-    means = random.uniform(0, 10,(nCentroids,2))
+    means = random.uniform(0, 10,(nCentroids,3))
+    # Choose R depending on minimum distance of centroids
+    r1 = float('inf');
+    for i in xrange(nCentroids - 1):
+        for j in range(i + 1,nCentroids):
+            if r1 > distance(means[i],means[j]):
+                r1 = distance(means[i],means[j])
+    scale = 0.2
+    r1 = r1*scale
+
     # generate gaussian data arround these centroids
     s = 0.05
-    r = random.uniform(0.2 * s * sqrt(n), s * sqrt(n))
-    cov = [[r,0],[r,1]]
+    r2 = random.uniform(0.2 * s * sqrt(n), s * sqrt(n))
+    r = min(r1, r2)
+    # 
+    cov = [[r,0],[0, r]]
     cluster = [(random.multivariate_normal(means[i], cov, n), i) for i in range(len(means))]
     # Get dataset and targets from dataset
     point, tar = [point for point, tar in cluster], [tar for point, tar in cluster]
@@ -218,7 +213,7 @@ def main():
     random.seed(5)
     # dataset = random.rand(1000, 2)
     #dataset = loadtxt('pendigits.tra', delimiter=',')
-    kcluster = 5
+    kcluster = 4
     dataset, labels = generateGaussianData(300, kcluster)
     # print "Label", labels
     figure2 = plt.figure("Target")

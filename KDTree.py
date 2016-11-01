@@ -1,5 +1,6 @@
 from random import seed, random
 from time import clock
+from numpy import shape
 from collections import namedtuple
 from pprint import pformat
 from operator import itemgetter
@@ -93,7 +94,9 @@ def calDensity(lbucket):
     #print density
     return density
 def chooseCentroids(LeafBucket, k):
-    """ Return k centroids"""
+    """ Return k centroids
+        Not use density rank and not discard 20% smallest that have low density
+    """
     lbcentroids = []
     density = []
     # Calculate densities and mean values for each leafbucket
@@ -130,6 +133,42 @@ def chooseCentroids(LeafBucket, k):
         #lbcentroids.remove(lbcentroids[next])
     return centroids
 
+def chooseCentroidsAdv(LeafBucket, k):
+    """ Return k centroids
+        use density rank and discard 20% smallest that have low density
+    """
+    abc = []
+    # Calculate densities and mean values for each leafbucket
+    for lb in LeafBucket:
+        abc.append([calDensity(lb),np.mean(lb, axis=0)])
+    # Sort by density
+    abc = sorted(abc, key=lambda a_entry: a_entry[0])
+    numlb = shape(LeafBucket)[0]
+    startIndex = numlb/5 # Ignore 20% small density
+    # Init and choose first centroids
+    centroids = []
+    first = np.argmax(numlb - 1) # max density point
+
+    centroids.append(abc[first][1])
+    # Remove chosen lbcentroids
+    del abc[first]
+
+    for i in xrange(1,k):
+        next = -1
+        maxg = 0; # g = mindist*density
+        # Choose index of next centroids
+        for index, ab in enumerate(abc):
+            if index < startIndex: # ignore 20% smallest density leaf bucket
+                continue
+            # Calculate min distance from centroids
+            mindist = min([distance(c,ab[1]) for c in centroids])
+            if (mindist*index > maxg): # use rank instead of density
+                next = index
+                maxg = mindist*index
+        centroids.append(abc[next][1])
+        #print lbcentroids[next]
+        del abc[next]
+    return centroids
 
 def load_pendigits(url):
     dataset = np.loadtxt(url, delimiter=',')
@@ -148,10 +187,10 @@ def KDTree2centroids(point_list, kcluster):
     # print '========'
     LeafBucket = getLeafBucket(tree)
     #print LeafBucket
-    centroids = chooseCentroids(LeafBucket, kcluster)
+    centroids = chooseCentroidsAdv(LeafBucket, kcluster)
     print 'Init Centroids with kdtree'
     print np.array(centroids)
-    print '=========='
+    #print '=========='
     return np.array(centroids)
 
 if __name__ == '__main__':
