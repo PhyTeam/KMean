@@ -3,6 +3,8 @@ import random as rnd
 import matplotlib.pyplot as plt
 from collections import Counter
 from KDTree import KDTree2centroids
+import sys
+import cPickle
 MAX_ITERATIONS = 20
 
 
@@ -112,7 +114,7 @@ def kmeans(dataset, k, initmethod):
     # plt.show()
     figure2 = plt.figure(str(initmethod))
     ax2 = figure2.add_subplot(111)
-    color = ['r', 'b', 'g', 'c'] * 3
+    color = color = ['r', 'b', 'g', 'c', 'm','y','k'] * 3#['r', 'b', 'g', 'c'] * 3
     for i in range(k):  # For each
         # print labels
         cluster = []
@@ -122,7 +124,7 @@ def kmeans(dataset, k, initmethod):
         if len(cluster) > 0:
             cluster = array(cluster)
             # print cluster
-            plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
+            plt.plot(cluster[:, 0], cluster[:, 1], color[i % k] + 'o')
     plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
     print "Iteraction of " + initmethod + ": "+str(iterations)
     print "==========="
@@ -138,7 +140,7 @@ def generateGaussianData(n, nCentroids):
     """
     random.seed()
     # Random n centroids
-    means = random.uniform(0, 10,(nCentroids,3))
+    means = random.uniform(0, 20,(nCentroids,2))
     # Choose R depending on minimum distance of centroids
     r1 = float('inf');
     for i in xrange(nCentroids - 1):
@@ -149,7 +151,7 @@ def generateGaussianData(n, nCentroids):
     r1 = r1*scale
 
     # generate gaussian data arround these centroids
-    s = 0.05
+    s = 2
     r2 = random.uniform(0.2 * s * sqrt(n), s * sqrt(n))
     r = min(r1, r2)
     # 
@@ -161,7 +163,7 @@ def generateGaussianData(n, nCentroids):
     fg = plt.figure('Clear Data')
     plt.axis('equal')
     ax = fg.add_subplot(111)
-    color = ['r', 'b', 'g', 'c'] * 3
+    color = color = ['r', 'b', 'g', 'c', 'm','y','k'] * 3#['r', 'b', 'g', 'c'] * 3
     for i, c in enumerate(point):
         plt.plot(c[:, 0], c[:, 1], color[i] + 'o')
 
@@ -210,15 +212,30 @@ def calcInformationGain(dataset, outputs, targets):
 
 def main():
     print "KD-Mean algorithm"
-    random.seed(5)
+    random.seed(4)
     # dataset = random.rand(1000, 2)
-    #dataset = loadtxt('pendigits.tra', delimiter=',')
-    kcluster = 4
-    dataset, labels = generateGaussianData(300, kcluster)
+    # dataset = loadtxt('pendigits.tra', delimiter=',')
+    kcluster = 5
+    dataset, labels = generateGaussianData(200, kcluster)
+    # dataset = loadtxt('example.txt', delimiter=' ')
+    # dataset = None
+    # labels = None
+    # Dump data to file
+    if len(sys.argv) > 1:
+        with open("abc.txt","w") as output_file:
+            cPickle.dump(dataset, output_file)
+        with open("label.txt","w") as output_file1:
+            cPickle.dump(labels, output_file1)
+    else:
+        with open("abc.txt","r") as input_f:
+            dataset = cPickle.load(input_f)
+        with open("label.txt","r") as input_f1:
+            labels = cPickle.load(input_f1)
+
     # print "Label", labels
     figure2 = plt.figure("Target")
     ax2 = figure2.add_subplot(111)
-    color = ['r', 'b', 'g', 'c'] * 3
+    color = ['r', 'b', 'g', 'c', 'm','y','k'] * 3
     for i in range(kcluster):  # For each
         # print labels
         cluster = []
@@ -228,7 +245,7 @@ def main():
         if len(cluster) > 0:
             cluster = array(cluster)
             # print cluster
-            plt.plot(cluster[:, 0], cluster[:, 1], color[i % 4] + 'o')
+            plt.plot(cluster[:, 0], cluster[:, 1], color[i % kcluster] + 'o')
     #plt.plot(centroids[:, 0], centroids[:, 1], 'k^')
 
     #dataset = loadtxt('test.txt', delimiter=',')
@@ -237,6 +254,7 @@ def main():
     #dataset = dataset[:,:-1]
     # plt.plot(dataset[:,0], dataset[:,1], 'o')
     # plt.show()
+    
     outputs = kmeans(dataset, kcluster, 'Forgy')
     output1 = kmeans(dataset, kcluster, 'Random Partition')
     output2 = kmeans(dataset, kcluster, 'kdtree')

@@ -137,37 +137,41 @@ def chooseCentroidsAdv(LeafBucket, k):
     """ Return k centroids
         use density rank and discard 20% smallest that have low density
     """
-    abc = []
+    #data = []
     # Calculate densities and mean values for each leafbucket
-    for lb in LeafBucket:
-        abc.append([calDensity(lb),np.mean(lb, axis=0)])
+    #for lb in LeafBucket:
+     #   data.append([calDensity(lb),np.mean(lb, axis=0)])
+    data = [(calDensity(lb), np.mean(lb, axis=0)) for lb in LeafBucket]
     # Sort by density
-    abc = sorted(abc, key=lambda a_entry: a_entry[0])
-    numlb = shape(LeafBucket)[0]
-    startIndex = numlb/5 # Ignore 20% small density
+    data = sorted(data, key=lambda a_entry: a_entry[0])
+    
+    data = data[1* len(data)/5:]
+    # print len(data), max(data)
+    # numlb = shape(LeafBucket)[0]
+    #startIndex = numlb/5 # Ignore 20% small density
     # Init and choose first centroids
-    centroids = []
-    first = np.argmax(numlb - 1) # max density point
-
-    centroids.append(abc[first][1])
+    #centroids = []
+    # first = np.argmax(numlb - 1) # max density point
+    # maxindex = len(data)
+    centroids = [data[-1][1]]
     # Remove chosen lbcentroids
-    del abc[first]
+    data = data[:-1]
 
     for i in xrange(1,k):
         next = -1
         maxg = 0; # g = mindist*density
         # Choose index of next centroids
-        for index, ab in enumerate(abc):
-            if index < startIndex: # ignore 20% smallest density leaf bucket
-                continue
+        for index, ab in enumerate(data):
+            #if index < startIndex: # ignore 20% smallest density leaf bucket
+            #    continue
             # Calculate min distance from centroids
             mindist = min([distance(c,ab[1]) for c in centroids])
             if (mindist*index > maxg): # use rank instead of density
                 next = index
                 maxg = mindist*index
-        centroids.append(abc[next][1])
+        centroids.append(data[next][1])
         #print lbcentroids[next]
-        del abc[next]
+        data = data[:next] + data[next+1:]
     return centroids
 
 def load_pendigits(url):
